@@ -22,3 +22,5 @@ p.challenges.append(challenge_object('The user must be able to paint cells to ma
 p.challenges.append(challenge_object('Ideally this should be an infinite sandbox.', 'After toying with the idea of an unlimited size of board the stretches to match the user\'s patterns it was decided that this would be unfeasible.  As the size of the board increases (for example, due to gospel gliders moving off to infinity) the amount of memory required to contain the game would increase to dangerous levels.  In addition the splicing of additional columns (and to a lesser extent, rows) of the board would incur a significant CPU cost.  The board is sufficiently large for most interesting patterns.', 'Resolved'))
 
 p.challenges.append(challenge_object('Saving patterns with markup.', 'One of the most useful features was for users to be able to share their patterns with other people.  To do this there is a link which automatically updates, storing the current board as a string as a url argument.  This is then parsed, which turned out to be quite simple, and centred on the board.', 'Resolved'))
+
+print p.wordpress_text()
