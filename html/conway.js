@@ -1,13 +1,6 @@
 var canvas  = 0 ;
 var context = 0 ;
-var mode    = 1 ;
 
-// Mode values:
-// 1: Conway's game of life
-// 2: Magnetic domains
-// 3: Rock paper scissors
-
-var n_colors = 3 ; // Only used for domains and rock paper scissors
 var colors = [] ;
 colors.push('#ffffff') ;
 colors.push('#ff0000') ;
@@ -18,8 +11,6 @@ colors.push('#ff00ff') ;
 colors.push('#00dddd') ;
 colors.push('#000000') ;
 
-var n_families = 1 ;
-var base_health = 10 ; // Only used for rock paper scissors
 var wrap = false ;
 
 // Control evolution duration and speed
@@ -89,34 +80,15 @@ function turn_run(){
   for(var i=0 ; i<nRows ; i++){
     for(var j=0 ; j<nCols ; j++){
       update_cell(i,j) ;
-      if(mode==3){
-        if(Math.floor(get_cell(i,j)/100)==0) n_w++ ;
-        if(Math.floor(get_cell(i,j)/100)==1) n_r++ ;
-        if(Math.floor(get_cell(i,j)/100)==2) n_g++ ;
-        if(Math.floor(get_cell(i,j)/100)==3) n_b++ ;
-      }
     }
   }
-  if(Get('span_white')) Get('span_white').innerHTML = n_w ;
-  if(Get('span_red'  )) Get('span_red'  ).innerHTML = n_r ;
-  if(Get('span_green')) Get('span_green').innerHTML = n_g ;
-  if(Get('span_blue' )) Get('span_blue' ).innerHTML = n_b ;
 }
 
 var rgb = [0,0,0] ;
 function turn_draw(){
   for(var i=0 ; i<nRows ; i++){
     for(var j=0 ; j<nCols ; j++){
-      if(mode==1){
-        draw_cell(i,j) ;
-      }
-      else if(mode==2){
-        draw_cell(i,j,colors[cells[i][j][0]]) ;
-      }
-      else if(mode==3){
-        color = colors[Math.floor(cells[i][j][0]/100)] ;
-        draw_cell(i,j,color) ;
-      }
+      draw_cell(i,j) ;
     }
   }
 }
@@ -152,125 +124,20 @@ function draw_cell(i,j,color){
 
 var neighbours = new Array() ;
 function update_cell(i,j){
-  if(mode==1){
-    var n_alive = 0 ;
-    for(var di=-1 ; di<=1 ; di++){
-      for(var dj=-1 ; dj<=1 ; dj++){
-        if(di==0 && dj==0) continue ;
-        n_alive += get_cell(i+di,j+dj) ;
-      }
-    }
-    if(cells[i][j][1]==0){
-      if(n_alive==3){ cells[i][j][0] = 1 ; return ; }
-    }
-    else{
-      if     (n_alive<2){ cells[i][j][0] = 0 ; return ; }
-      else if(n_alive>3){ cells[i][j][0] = 0 ; return ; }
-      else              { cells[i][j][0] = 1 ; return ; }
+  var n_alive = 0 ;
+  for(var di=-1 ; di<=1 ; di++){
+    for(var dj=-1 ; dj<=1 ; dj++){
+      if(di==0 && dj==0) continue ;
+      n_alive += get_cell(i+di,j+dj) ;
     }
   }
-  else if(mode==2){
-    var adjacent_colors = new Array() ;
-    for(var ic=0 ; ic<=n_colors ; ic++){ adjacent_colors.push(0) ; }
-    for(var di=-1 ; di<=1 ; di++){
-      for(var dj=-1 ; dj<=1 ; dj++){
-        if(di==0 && dj==0) continue ;
-        var value = get_cell(i+di,j+dj) ;
-        adjacent_colors[value]++ ;
-      }
-    }
-    var max_n = 0 ;
-    var max_i = 0 ;
-    var draw = false ;
-    for(var ic=1 ; ic<=n_colors ; ic++){
-      if(adjacent_colors[ic]>max_n){
-        max_n = adjacent_colors[ic] ;
-        max_i = ic ;
-        draw = false
-      }
-      else if(adjacent_colors[ic]==max_n){
-        draw = true ;
-      }
-    }
-    if(draw==false){ cells[i][j][0] = max_i          ; return ; }
-    else           { cells[i][j][0] = cells[i][j][1] ; return ; }
+  if(cells[i][j][1]==0){
+    if(n_alive==3){ cells[i][j][0] = 1 ; return ; }
   }
-  else if(mode==3){
-    var index=0 ;
-    for(var di=-1 ; di<=1 ; di++){
-      for(var dj=-1 ; dj<=1 ; dj++){
-        if(di==0 && dj==0) continue ;
-        var value = get_cell(i+di,j+dj) ;
-        neighbours[index] = value ;
-        index++ ;
-      }
-    }
-    var other  = neighbours[ Math.floor(8*Math.random()) ] ;
-    var breed  = Math.floor(cells[i][j][1]/100) ;
-    var health = cells[i][j][1]%100 ;
-    var other_breed  = Math.floor(other/100) ;
-    var other_health = other%100 ;
-    if(breed==0){
-      if(other_breed!=0 && other_health>=1){
-        var white_health = other_health-1 ;
-        if(white_health==0) white_health = 1 ;
-        cells[i][j][0] = other_breed*100+white_health ; return ;
-      }
-    }
-    else{
-      var eaten = false ;
-      var nom   = false ;
-      if(other_breed!=0 && (breed+n_colors+1)%n_colors==(other_breed+n_colors)%n_colors) eaten = true ;
-      if(other_breed!=0 && (breed+n_colors-1)%n_colors==(other_breed+n_colors)%n_colors) nom   = true ;
-      if(n_families==2 && n_colors==6){
-        // Require exactly 6 colours for this
-        
-        // Reset feeding information
-        eaten = false ;
-        nom   = false ;
-        if(breed>=1 && breed<=3){
-          if(other_breed>=4 && other_breed<=6) return ; // Nothing to see here          
-          if(breed==1 && other_breed==2) eaten = true ;
-          if(breed==2 && other_breed==3) eaten = true ;
-          if(breed==3 && other_breed==1) eaten = true ;
-          if(breed==1 && other_breed==3) nom   = true ;
-          if(breed==2 && other_breed==1) nom   = true ;
-          if(breed==3 && other_breed==2) nom   = true ;
-        }
-        else if(breed>=4 && breed<=6){
-          if(other_breed>=1 && other_breed<=3) return ; // Nothing to see here
-          if(breed==4 && other_breed==5) eaten = true ;
-          if(breed==5 && other_breed==6) eaten = true ;
-          if(breed==6 && other_breed==4) eaten = true ;
-          if(breed==4 && other_breed==6) nom   = true ;
-          if(breed==5 && other_breed==4) nom   = true ;
-          if(breed==6 && other_breed==5) nom   = true ;
-        }
-      }
-      if(eaten){
-        // Get eaten by neighbour
-        health-- ;
-        if(health>1){
-          cells[i][j][0] = 100*breed+health ;
-          return ;
-        }
-        else{
-          if(other_health>1){
-            cells[i][j][0] = other-1 ; return ;
-          }
-          else{
-            cells[i][j][0] = other ;
-          }
-        }
-      }
-      if(nom){
-        // Get eaten by neighbour
-        health++ ;
-        if(health>base_health) health = base_health ;
-        cells[i][j][0] = 100*breed+health ;
-        return ;
-      }
-    }
+  else{
+    if     (n_alive<2){ cells[i][j][0] = 0 ; return ; }
+    else if(n_alive>3){ cells[i][j][0] = 0 ; return ; }
+    else              { cells[i][j][0] = 1 ; return ; }
   }
 }
 
@@ -402,23 +269,7 @@ function change_dust(){
   if(dust_density>1) dust_density = 1 ;
   for(var i=0 ; i<nRows ; i++){
     for(var j=0 ; j<nCols ; j++){
-      var value = 0 ;
-      switch(mode){
-        case 1:
-        default:
-          value = (Math.random()<dust_density) ;
-          break ;
-        case 2:
-          value = Math.floor(1+n_colors*Math.random()) ;
-          break ;
-        case 3:
-          value = 0 ;
-          if(Math.random()<dust_density){
-            value = Math.floor(1+n_colors*Math.random()) ;
-            value = 100*value + base_health ;
-          }
-          break ;
-      }
+      var value = (Math.random()<dust_density) ;
       cells[i][j] = [value,value] ;
     }
   }
@@ -446,10 +297,8 @@ function start(){
   Get('input_delay').value = delay ;
   canvas  = Get('life_canvas') ;
   context = canvas.getContext('2d') ;
-  if(mode==1){
-    canvas.addEventListener('click'    , click    , false) ;
-    canvas.addEventListener('mousemove', mousemove, false) ;
-  }
+  canvas.addEventListener('click'    , click    , false) ;
+  canvas.addEventListener('mousemove', mousemove, false) ;
   Get('button_start').addEventListener('click', start_life  ,false) ;
   Get('button_stop' ).addEventListener('click', stop_life   ,false) ;
   Get('button_reset').addEventListener('click', reset_life  ,false) ;
@@ -459,17 +308,6 @@ function start(){
   Get('input_delay').value = delay ;
   Get('input_dust' ).value = dust_density ;
   
-  var extra_content_wrapper = Get('extra_content_wrapper') ;
-  extra_content_wrapper.innerHTML = extra_paragraph() ;
-  
-  if(mode==2 || mode==3){
-    //cellSize = 5 ;
-    nRows = Math.floor(height/cellSize) ;
-    nCols = Math.floor( width/cellSize) ;
-    remake_cells() ;
-    stop = -1 ;
-  }
-  if(mode==2||mode==3) change_dust() ;
   remake_cells() ;
   load_from_url() ;
   
@@ -496,15 +334,6 @@ function mousemove(evt){
   }
   else{
     draw_cell(hover_i,hover_j,'rgb(100,0,0)') ;
-  }
-}
-
-function extra_paragraph(){
-  if(mode==1){
-    return '<p>Some interesting patterns: <a href="?100;111;010">R-pentomino</a> - <a href="?101;111;010">Fork</a> - <a href="?000001;000000;000011;000000;011100;000000;111000;010000">Minimal block generator</a> - <a href="?11001;10010;10011;00100;10111">Square block generator</a> - <a href="?1;1;1;1;1;1;1;1;0;1;1;1;1;1;0;0;0;1;1;1;0;0;0;0;0;0;1;1;1;1;1;1;1;0;1;1;1;1;1">Infinite linear</a> - <a href="http://aidansean.com/conway/?000011000;000011000;000000000;000000000;000000000;000000000;000000000;000000000;000000000;000000000;000011100;000100010;001000001;001000001;000001000;000100010;000011100;000001000;000000000;000000000;001110000;001110000;010001000;000000000;110001100;000000000;000000000;000000000;000000000;000000000;000000000;000000000;000000000;000000000;001100000;001100000">Gosper glider gun</a> - <a href="?1100011;0011100;0100010;0010100;0001000">Queen bee</a> - <a href="?000000000001000000000000;000000000101000000000000;000000001010000000000000;000000010010000000000000;000000001010000000000000;000000000101000000000000;000000000001000000000000;000000000000000000001000;000000000000000000010100;000000000000000000100010;000000000000000000011100;000000000000000001100011;110001100000000000000000;001110000000000000000000;010001000000000000000000;001010000000000000000000;000100000000000000000000;000000000000100000000000;000000000000101000000000;000000000000010100000000;000000000000010010000000;000000000000010100000000;000000000000101000000000;000000000000100000000000">Queen bee loop</a></p>' ;
-  }
-  if(mode==2 || mode==3){
-    return '<p>White: <span id="span_white"></span><br />Red: <span id="span_red"></span><br />Green: <span id="span_green"></span><br />Blue: <span id="span_blue"></span></p>' ;
   }
 }
 

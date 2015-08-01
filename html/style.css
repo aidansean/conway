@@ -10,5 +10,19 @@ div#canvas_wrapper{
   margin : auto ;
 }
 input#input_delay, input#input_dust{
-  width : 50px ;
+  width : 25px ;
 }
+
+input.conway_button{
+  font-size : 12pt ;
+  height : 1.5em ;
+}
+
+div.tab{
+  display : table ;
+}
+div.tab_cell{
+  display : table-cell ;
+  text-align : center ;
+}
+
